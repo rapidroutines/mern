@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
-const API_URL = "http://localhost:3000/api/auth";
+// Use environment variables with fallback to localhost for development
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api/auth";
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -22,14 +23,19 @@ export const useAuthStore = create((set) => ({
         body: JSON.stringify({ email, password, name }),
       });
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to sign up");
+      }
+      
       set({ isLoading: false, isAuthenticated: true, user: data.user });
     } catch (error) {
       set({ isLoading: false, error: error.message });
       console.log(error);
-
       throw error;
     }
   },
+  
   verifyEmail: async (code) => {
     set({ isLoading: true, error: null });
     try {
@@ -42,12 +48,18 @@ export const useAuthStore = create((set) => ({
         body: JSON.stringify({ code }),
       });
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to verify email");
+      }
+      
       set({ isLoading: false, isAuthenticated: true, user: data.user });
     } catch (error) {
       set({ isLoading: false, error: error.message });
       console.log(error);
     }
   },
+  
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
@@ -60,6 +72,11 @@ export const useAuthStore = create((set) => ({
         body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to login");
+      }
+      
       set({ isLoading: false, isAuthenticated: true, user: data.user });
     } catch (error) {
       set({ isLoading: false, error: error.message });
@@ -67,6 +84,7 @@ export const useAuthStore = create((set) => ({
       throw error;
     }
   },
+  
   checkAuth: async () => {
     set({ isCheckingAuth: true, error: null });
     try {
@@ -78,7 +96,8 @@ export const useAuthStore = create((set) => ({
         credentials: "include",
       });
       const data = await response.json();
-      if (data.user) {
+      
+      if (response.ok && data.user) {
         set({ isAuthenticated: true, user: data.user, isCheckingAuth: false });
       } else {
         set({ isAuthenticated: false, user: null, isCheckingAuth: false });
@@ -88,6 +107,7 @@ export const useAuthStore = create((set) => ({
       console.log(error);
     }
   },
+  
   logout: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -104,8 +124,9 @@ export const useAuthStore = create((set) => ({
       throw error;
     }
   },
+  
   forgotPassword: async (email) => {
-    set({ isLoading: true, error: null});
+    set({ isLoading: true, error: null });
     try {
       const response = await fetch(`${API_URL}/forgot-password`, {
         method: "POST",
@@ -115,14 +136,19 @@ export const useAuthStore = create((set) => ({
         credentials: "include",
         body: JSON.stringify({ email }),
       });
-     const data = await response.json();
-     console.log(data.message);
-     set({ isLoading: false, message: data.message });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to reset password");
+      }
+      
+      set({ isLoading: false, message: data.message });
     } catch (error) {
       set({ isLoading: false, error: error.message });
       console.log(error);
     }
   },
+  
   resetPassword: async (token, password) => {
     set({ isLoading: true, error: null });
     try {
@@ -135,6 +161,11 @@ export const useAuthStore = create((set) => ({
         body: JSON.stringify({ password }),
       });
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to reset password");
+      }
+      
       set({ isLoading: false, message: data.message });
     } catch (error) {
       set({ isLoading: false, error: error.message });
